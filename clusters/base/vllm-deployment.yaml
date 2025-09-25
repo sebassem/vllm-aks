@@ -13,7 +13,7 @@ spec:
         app: myapp
     spec:
       containers:
-      - name: nginx
+      - name: webapp
         image: nginx
         resources:
           limits:
