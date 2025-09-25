@@ -4,7 +4,7 @@ kind: Kustomization
 patches:
 - path: usa-patch.yaml
 
-namespace: usa-vllm
+namespace: usa-ns
 
 resources:
 - ../../base

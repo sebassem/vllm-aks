@@ -4,7 +4,7 @@ kind: Kustomization
 patches:
 - path: emea-patch.yaml
 
-namespace: emea-vllm
+namespace: emea-ns
 
 resources:
 - ../../base
