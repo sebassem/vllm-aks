@@ -26,7 +26,7 @@ spec:
   url: https://helm.ngc.nvidia.com/nvidia
 ---
 # Helm Release for Node Feature Discovery
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: node-feature-discovery
@@ -44,10 +44,12 @@ spec:
   install:
     createNamespace: true
     timeout: 10m
-    wait: true
+    remediation:
+      retries: 3
   upgrade:
     timeout: 10m
-    wait: true
+    remediation:
+      retries: 3
   values:
     master:
       config:
@@ -55,7 +57,7 @@ spec:
           - "nvidia.com"
 ---
 # Helm Release for NVIDIA GPU Operator
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: gpu-operator
@@ -75,10 +77,12 @@ spec:
         namespace: flux-system
   install:
     timeout: 20m
-    wait: true
+    remediation:
+      retries: 3
   upgrade:
     timeout: 20m
-    wait: true
+    remediation:
+      retries: 3
   values:
     nfd:
       enabled: false
