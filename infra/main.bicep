@@ -137,7 +137,7 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.10.1' = {
                     }
                     kustomizations:{
                         bootstrap:{
-                            path: './infrastructure/base'
+                            path: './cluster-config/boostrap/base'
                             dependsOn: []
                             prune: true
                             syncIntervalInSeconds: 600
@@ -148,7 +148,7 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.10.1' = {
                             /*dependsOn: [
                                 'bootstrap'
                             ]*/
-                            path: './apps/overlays/EMEA'
+                            path: './cluster-config/apps/overlays/EMEA'
                             prune: true
                             retryIntervalInSeconds: 120
                             syncIntervalInSeconds: 600
