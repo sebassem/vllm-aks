@@ -123,7 +123,7 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.10.1' = {
         skuName: 'Base'
         publicNetworkAccess: publicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
         fluxExtension: {
-            name: 'fluxConfiguratio'
+            name: 'fluxConfiguration'
             configurations: [
                 {
                     gitRepository:{
