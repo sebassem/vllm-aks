@@ -3,11 +3,13 @@ targetScope = 'subscription'
 @description('Location for all resources.')
 param location string = deployment().location
 
+param suffix string = take(uniqueString(deployment().name), 4)
+
 @description('Name of the resource group to create.')
-param resourceGroupName string = 'rg-${location}-aks'
+param resourceGroupName string = 'rg-${location}-${suffix}'
 
 @description('Name of the AKS cluster to create.')
-param aksClusterName string = 'aks-${location}-aks'
+param aksClusterName string = 'aks-${location}-${suffix}'
 
 @description('Number of nodes in the system node pool.')
 param systemNodePoolCount int = 1
@@ -40,7 +42,7 @@ param useSpotInstances bool = false
 param enableMIG bool = false
 
 @description('Name of the Log Analytics workspace to create.')
-param logAnalyticsWorkspaceName string = 'law-${location}-aks2'
+param logAnalyticsWorkspaceName string = 'law-${location}-${suffix}'
 
 @description('Name of the Azure Container Registry to use.')
 param acrName string = 'acrllm87232'
@@ -56,7 +58,7 @@ resource rg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
 }
 
 module logAnalytics 'br/public:avm/res/operational-insights/workspace:0.12.0' = {
-    scope: rg
+scope: rg
     params: {
         name: logAnalyticsWorkspaceName
         location: location
@@ -71,91 +73,83 @@ resource acr 'Microsoft.ContainerRegistry/registries@2025-05-01-preview' existin
 module aks 'br/public:avm/res/container-service/managed-cluster:0.10.1' = {
     scope: rg
     params: {
-        name: aksClusterName
-        location: location
-        primaryAgentPoolProfiles: [
-            {
-                name: systemNodePoolName
-                count: systemNodePoolCount
-                osType: 'Linux'
-                type: 'VirtualMachineScaleSets'
-                mode: 'System'
-                vmSize: systemNodePoolVmSize
-                availabilityZones: []
-            }
-        ]
-        agentPools: [
-            {
-                name: deployGPUNodePool ? 'gpupool' : 'cpupool'
-                count: userNodePoolCount
-                gpuInstanceProfile: enableMIG ? 'MIG1g' : null
-                vmSize: deployGPUNodePool ? gpuNodePoolVmSize : cpuNodePoolVmSize
-                scaleSetPriority: useSpotInstances ? 'Spot' : 'Regular'
-                scaleDownMode: useSpotInstances ? 'Delete' : null
-                availabilityZones: []
-            }
-        ]
-        aadProfile: {
-            aadProfileEnableAzureRBAC: true
-            aadProfileManaged: true
+    name: aksClusterName
+    location: location
+    primaryAgentPoolProfiles: [
+        {
+            name: systemNodePoolName
+            count: systemNodePoolCount
+            osType: 'Linux'
+            type: 'VirtualMachineScaleSets'
+            mode: 'System'
+            vmSize: systemNodePoolVmSize
+            availabilityZones: []
         }
-        roleAssignments: [
-            {
-                principalId: deployerId
-                roleDefinitionIdOrName:'0ab0b1a8-8aac-4efd-b8c2-3ee1fb270be8'
-                description: 'AKS Cluster Admin Role Assignment for Deployer'
-            }
-        ]
-        enableAzureMonitorProfileMetrics: true
-        enableContainerInsights: true
-        enableImageCleaner: true
-        enableStorageProfileDiskCSIDriver: true
-        omsAgentEnabled: true
-        monitoringWorkspaceResourceId: logAnalytics.outputs.resourceId
-        loadBalancerSku: 'standard'
-        networkPlugin: 'azure'
-        networkPolicy: 'azure'
-        outboundType: 'managedNATGateway'
-        managedIdentities: {
-            systemAssigned: true
+    ]
+    agentPools: [
+        {
+            name: deployGPUNodePool ? 'gpupool' : 'cpupool'
+            count: userNodePoolCount
+            gpuInstanceProfile: enableMIG ? 'MIG1g' : null
+            vmSize: deployGPUNodePool ? gpuNodePoolVmSize : cpuNodePoolVmSize
+            scaleSetPriority: useSpotInstances ? 'Spot' : 'Regular'
+            scaleDownMode: useSpotInstances ? 'Delete' : null
+            availabilityZones: []
         }
-        skuTier: 'Standard'
-        skuName: 'Base'
-        publicNetworkAccess: publicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
-        fluxExtension: {
-            configurations: [
-                {
-                    namespace: 'flux-system'
-                    scope: 'cluster'
-                    gitRepository:{
-                        repositoryRef: {
-                            branch: 'main'
-                        }
-                        syncIntervalInSeconds: 300
-                        timeoutInSeconds: 3600
-                        url: 'https://github.com/sebassem/vllm-aks'
-                    }
-                    kustomizations:{
-                        bootstrap:{
-                            path: './cluster-config/bootsrap/base'
-                            dependsOn: []
-                            prune: true
-                            syncIntervalInSeconds: 600
-                            timeoutInSeconds: 3600
-                        }
-                        apps: {
-                            dependsOn: [
-                                'bootstrap'
-                            ]
-                            path: './cluster-config/apps/overlays/EMEA'
-                            prune: true
-                            retryIntervalInSeconds: 120
-                            syncIntervalInSeconds: 600
-                            timeoutInSeconds: 3600
-                            }
-                    }
-                }
-            ]
+    ]
+    aadProfile: {
+        aadProfileEnableAzureRBAC: true
+        aadProfileManaged: true
+        aadProfileAdminGroupObjectIDs: [
+            'a9d32637-e42f-4e20-808c-83a6ed3d2874'
+        ]
+    }
+    enableAzureMonitorProfileMetrics: true
+    enableContainerInsights: true
+    enableImageCleaner: true
+    enableStorageProfileDiskCSIDriver: true
+    omsAgentEnabled: true
+    monitoringWorkspaceResourceId: logAnalytics.outputs.resourceId
+    loadBalancerSku: 'standard'
+    networkPlugin: 'azure'
+    networkPolicy: 'azure'
+    outboundType: 'managedNATGateway'
+    managedIdentities: {
+    systemAssigned: true
+    }
+    skuTier: 'Standard'
+    skuName: 'Base'
+    publicNetworkAccess: publicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
+    fluxExtension: {
+            name: 'flux-extension'
+        }
+    }
+}
+
+module appConfiguration 'br/public:avm/res/kubernetes-configuration/flux-configuration:0.3.8' = {
+    scope: rg
+    params: {
+        scope: 'cluster'
+        name: 'vllm-appconfig'
+        clusterName: aks.outputs.name
+        namespace: 'emea-app-ns'
+        sourceKind: 'GitRepository'
+        gitRepository: {
+            url: 'https://github.com/sebassem/vllm-aks'
+            repositoryRef: {
+                branch: 'main'
+            }
+            syncIntervalInSeconds: 300
+            timeoutInSeconds: 3600
+        }
+        kustomizations: {
+            apps: {
+                path: './cluster-config/apps/overlays/EMEA'
+                prune: true
+                retryIntervalInSeconds: 120
+                syncIntervalInSeconds: 600
+                timeoutInSeconds: 3600
+            }
         }
     }
 }
