@@ -1,13 +1,16 @@
 targetScope = 'subscription'
 
+@description('Suffix for naming all resources.')
+param namingSuffix string = take(uniqueString(deployment().name,location),5)
+
 @description('Location for all resources.')
 param location string = deployment().location
 
 @description('Name of the resource group to create.')
-param resourceGroupName string = 'rg-${location}-aks'
+param resourceGroupName string = 'rg-${location}-${namingSuffix}'
 
 @description('Name of the AKS cluster to create.')
-param aksClusterName string = 'aks-${location}-001'
+param aksClusterName string = 'aks-${location}-${namingSuffix}'
 
 @description('Number of nodes in the system node pool.')
 param systemNodePoolCount int = 1
@@ -40,7 +43,7 @@ param useSpotInstances bool = false
 param enableMIG bool = false
 
 @description('Name of the Log Analytics workspace to create.')
-param logAnalyticsWorkspaceName string = 'law-${location}-aks'
+param logAnalyticsWorkspaceName string = 'law-${location}-${namingSuffix}'
 
 @description('Name of the Azure Container Registry to use.')
 param acrName string = 'acrllm87232'
@@ -154,7 +157,6 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.10.1' = {
                             syncIntervalInSeconds: 600
                             timeoutInSeconds: 600
                             }
-                        scope: 'cluster'
                     }
                 }
             ]

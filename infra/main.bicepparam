@@ -1,8 +1,6 @@
 using './main.bicep'
 
 param location = 'swedencentral'
-param resourceGroupName = 'rg-${location}-aks'
-param aksClusterName = 'aks-${location}-001'
 param systemNodePoolCount = 1
 param deployGPUNodePool = false
 param systemNodePoolVmSize = 'Standard_D2s_v6'
