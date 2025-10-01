@@ -1,16 +1,13 @@
 targetScope = 'subscription'
 
-@description('Suffix for naming all resources.')
-param namingSuffix string = take(uniqueString(deployment().name,location),5)
-
 @description('Location for all resources.')
 param location string = deployment().location
 
 @description('Name of the resource group to create.')
-param resourceGroupName string = 'rg-${location}-${namingSuffix}'
+param resourceGroupName string = 'rg-${location}-aks'
 
 @description('Name of the AKS cluster to create.')
-param aksClusterName string = 'aks-${location}-${namingSuffix}'
+param aksClusterName string = 'aks-${location}-aks'
 
 @description('Number of nodes in the system node pool.')
 param systemNodePoolCount int = 1
@@ -43,7 +40,7 @@ param useSpotInstances bool = false
 param enableMIG bool = false
 
 @description('Name of the Log Analytics workspace to create.')
-param logAnalyticsWorkspaceName string = 'law-${location}-${namingSuffix}'
+param logAnalyticsWorkspaceName string = 'law-${location}-aks2'
 
 @description('Name of the Azure Container Registry to use.')
 param acrName string = 'acrllm87232'
@@ -126,36 +123,35 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.10.1' = {
         skuName: 'Base'
         publicNetworkAccess: publicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
         fluxExtension: {
-            name: 'fluxConfiguration'
             configurations: [
                 {
+                    namespace: 'flux-system'
+                    scope: 'cluster'
                     gitRepository:{
                         repositoryRef: {
                             branch: 'main'
                         }
                         syncIntervalInSeconds: 300
-                        timeoutInSeconds: 180
-                        retryIntervalInSeconds: 120
+                        timeoutInSeconds: 3600
                         url: 'https://github.com/sebassem/vllm-aks'
                     }
                     kustomizations:{
                         bootstrap:{
-                            path: './cluster-config/boostrap/base'
+                            path: './cluster-config/bootsrap/base'
                             dependsOn: []
                             prune: true
                             syncIntervalInSeconds: 600
-                            timeoutInSeconds: 600
-                            validation: 'none'
+                            timeoutInSeconds: 3600
                         }
                         apps: {
-                            /*dependsOn: [
+                            dependsOn: [
                                 'bootstrap'
-                            ]*/
+                            ]
                             path: './cluster-config/apps/overlays/EMEA'
                             prune: true
                             retryIntervalInSeconds: 120
                             syncIntervalInSeconds: 600
-                            timeoutInSeconds: 600
+                            timeoutInSeconds: 3600
                             }
                     }
                 }
@@ -169,7 +165,7 @@ module acrPullRole 'br/public:avm/ptn/authorization/resource-role-assignment:0.1
     params: {
         principalId: aks.outputs.?kubeletIdentityObjectId ?? ''
         resourceId: acr.id
-        roleDefinitionId: '	7f951dda-4ed3-4680-a7ca-43fe172d538d'
+        roleDefinitionId: '7f951dda-4ed3-4680-a7ca-43fe172d538d'
         description: 'AcrPull role assignment for AKS cluster'
     }
 }

@@ -6,7 +6,7 @@ namePrefix: emea-
 patches:
 - path: emea-patch.yaml
 
-namespace: emea-ns
+namespace: emea-app-ns
 
 resources:
 - ../../base
