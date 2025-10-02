@@ -127,10 +127,10 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.10.1' = {
 module appConfiguration 'br/public:avm/res/kubernetes-configuration/flux-configuration:0.3.8' = {
     scope: rg
     params: {
-        scope: 'cluster'
+        scope: 'namespace'
         name: 'vllm-appconfig'
         clusterName: aks.outputs.name
-        namespace: 'flux-system'
+        namespace: 'emea-app-ns'
         sourceKind: 'GitRepository'
         gitRepository: {
             url: 'https://github.com/sebassem/vllm-aks'
