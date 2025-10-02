@@ -9,5 +9,6 @@ patches:
 namespace: emea-app-ns
 
 resources:
+- namespace.yaml
 - ../../base
 

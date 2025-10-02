@@ -50,8 +50,6 @@ param acrName string = 'acrllm87232'
 @description('Resource group of the Azure Container Registry to use.')
 param acrResourceGroup string = 'vllm'
 
-var deployerId = deployer().objectId
-
 resource rg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
     name: resourceGroupName
     location: location
@@ -120,9 +118,9 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.10.1' = {
     skuTier: 'Standard'
     skuName: 'Base'
     publicNetworkAccess: publicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
-    fluxExtension: {
+    /*fluxExtension: {
             name: 'flux-extension'
-        }
+        }*/
     }
 }
 
@@ -132,7 +130,7 @@ module appConfiguration 'br/public:avm/res/kubernetes-configuration/flux-configu
         scope: 'cluster'
         name: 'vllm-appconfig'
         clusterName: aks.outputs.name
-        namespace: 'emea-app-ns'
+        namespace: 'flux-system'
         sourceKind: 'GitRepository'
         gitRepository: {
             url: 'https://github.com/sebassem/vllm-aks'

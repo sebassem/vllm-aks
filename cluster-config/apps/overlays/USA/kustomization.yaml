@@ -9,5 +9,6 @@ patches:
 namespace: usa-ns
 
 resources:
+- namespace.yaml
 - ../../base
 
