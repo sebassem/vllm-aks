@@ -24,7 +24,7 @@ param systemNodePoolVmSize string = 'Standard_D2s_v6'
 param cpuNodePoolVmSize string = 'Standard_D4s_v6'
 
 @description('VM size for the GPU user node pool. NC24ads_A100_v4 or NC4as_T4_v3 are recommended.')
-param gpuNodePoolVmSize string = 'NC4as_T4_v3'
+param gpuNodePoolVmSize string = 'Standard_NC4as_T4_v3'
 
 @description('Enable or disable public network access to the AKS API server.')
 param publicNetworkAccessEnabled bool = true
@@ -68,69 +68,66 @@ resource acr 'Microsoft.ContainerRegistry/registries@2025-05-01-preview' existin
     scope: resourceGroup(acrResourceGroup)
 }
 
-module aks 'br/public:avm/res/container-service/managed-cluster:0.10.1' = {
+module aks 'br/public:avm/res/container-service/managed-cluster:0.11.0' = {
     scope: rg
     params: {
-    name: aksClusterName
-    location: location
-    primaryAgentPoolProfiles: [
-        {
-            name: systemNodePoolName
-            count: systemNodePoolCount
-            osType: 'Linux'
-            type: 'VirtualMachineScaleSets'
-            mode: 'System'
-            vmSize: systemNodePoolVmSize
-            availabilityZones: []
-        }
-    ]
-    agentPools: [
-        {
-            name: deployGPUNodePool ? 'gpupool' : 'cpupool'
-            count: userNodePoolCount
-            gpuInstanceProfile: enableMIG ? 'MIG1g' : null
-            vmSize: deployGPUNodePool ? gpuNodePoolVmSize : cpuNodePoolVmSize
-            scaleSetPriority: useSpotInstances ? 'Spot' : 'Regular'
-            scaleDownMode: useSpotInstances ? 'Delete' : null
-            availabilityZones: []
-        }
-    ]
-    aadProfile: {
-        aadProfileEnableAzureRBAC: true
-        aadProfileManaged: true
-        aadProfileAdminGroupObjectIDs: [
-            'a9d32637-e42f-4e20-808c-83a6ed3d2874'
+        name: aksClusterName
+        location: location
+        primaryAgentPoolProfiles: [
+            {
+                name: systemNodePoolName
+                count: systemNodePoolCount
+                osType: 'Linux'
+                type: 'VirtualMachineScaleSets'
+                mode: 'System'
+                vmSize: systemNodePoolVmSize
+                availabilityZones: []
+            }
         ]
-    }
-    enableAzureMonitorProfileMetrics: true
-    enableContainerInsights: true
-    enableImageCleaner: true
-    enableStorageProfileDiskCSIDriver: true
-    omsAgentEnabled: true
-    monitoringWorkspaceResourceId: logAnalytics.outputs.resourceId
-    loadBalancerSku: 'standard'
-    networkPlugin: 'azure'
-    networkPolicy: 'azure'
-    outboundType: 'managedNATGateway'
-    managedIdentities: {
-    systemAssigned: true
-    }
-    skuTier: 'Standard'
-    skuName: 'Base'
-    publicNetworkAccess: publicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
-    /*fluxExtension: {
-            name: 'flux-extension'
-        }*/
+        agentPools: [
+            {
+                name: deployGPUNodePool ? 'gpupool' : 'cpupool'
+                count: userNodePoolCount
+                gpuInstanceProfile: enableMIG ? 'MIG1g' : null
+                vmSize: deployGPUNodePool ? gpuNodePoolVmSize : cpuNodePoolVmSize
+                scaleSetPriority: useSpotInstances ? 'Spot' : 'Regular'
+                scaleDownMode: useSpotInstances ? 'Delete' : null
+                availabilityZones: []
+            }
+        ]
+        aadProfile: {
+            aadProfileEnableAzureRBAC: true
+            aadProfileManaged: true
+            aadProfileAdminGroupObjectIDs: [
+                'a9d32637-e42f-4e20-808c-83a6ed3d2874'
+            ]
+        }
+        enableAzureMonitorProfileMetrics: true
+        enableContainerInsights: true
+        enableImageCleaner: true
+        enableStorageProfileDiskCSIDriver: true
+        omsAgentEnabled: true
+        monitoringWorkspaceResourceId: logAnalytics.outputs.resourceId
+        loadBalancerSku: 'standard'
+        networkPlugin: 'azure'
+        networkPolicy: 'azure'
+        outboundType: 'managedNATGateway'
+        managedIdentities: {
+        systemAssigned: true
+        }
+        skuTier: 'Standard'
+        skuName: 'Base'
+        publicNetworkAccess: publicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
     }
 }
 
-module appConfiguration 'br/public:avm/res/kubernetes-configuration/flux-configuration:0.3.8' = {
+/*module appConfiguration 'br/public:avm/res/kubernetes-configuration/flux-configuration:0.3.8' = {
     scope: rg
     params: {
-        scope: 'namespace'
+        scope: 'cluster'
         name: 'vllm-appconfig'
         clusterName: aks.outputs.name
-        namespace: 'emea-app-ns'
+        namespace: 'flux-system'
         sourceKind: 'GitRepository'
         gitRepository: {
             url: 'https://github.com/sebassem/vllm-aks'
@@ -142,7 +139,7 @@ module appConfiguration 'br/public:avm/res/kubernetes-configuration/flux-configu
         }
         kustomizations: {
             apps: {
-                path: './cluster-config/apps/overlays/EMEA'
+                path: './cluster-config/apps/overlays/EMEA/'
                 prune: true
                 retryIntervalInSeconds: 120
                 syncIntervalInSeconds: 600
@@ -151,7 +148,7 @@ module appConfiguration 'br/public:avm/res/kubernetes-configuration/flux-configu
         }
     }
 }
-
+*/
 module acrPullRole 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
     scope: resourceGroup('vllm')
     params: {
