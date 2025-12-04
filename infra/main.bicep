@@ -68,7 +68,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2025-05-01-preview' existin
     scope: resourceGroup(acrResourceGroup)
 }
 
-module aks 'br/public:avm/res/container-service/managed-cluster:0.11.0' = {
+module aks 'br/public:avm/res/container-service/managed-cluster:0.11.1' = {
     scope: rg
     params: {
         name: aksClusterName
@@ -93,6 +93,18 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.11.0' = {
                 scaleSetPriority: useSpotInstances ? 'Spot' : 'Regular'
                 scaleDownMode: useSpotInstances ? 'Delete' : null
                 availabilityZones: []
+                nodeLabels: {
+                    apps: 'llm-inference'
+                }
+               /*nodeTaints: [
+                    'sku=gpu:NoSchedule'
+                ]
+                enableAutoScaling: true
+                minCount: 1
+                maxCount: 3
+                tags: {
+                    EnableManagedGPUExperience: 'true'
+                }*/
             }
         ]
         aadProfile: {
@@ -102,6 +114,7 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.11.0' = {
                 'a9d32637-e42f-4e20-808c-83a6ed3d2874'
             ]
         }
+        enableOidcIssuerProfile: true
         enableAzureMonitorProfileMetrics: true
         enableContainerInsights: true
         enableImageCleaner: true
