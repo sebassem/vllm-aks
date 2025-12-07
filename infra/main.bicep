@@ -94,12 +94,12 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.11.1' = {
                     apps: 'llm-inference'
                 }
             }
-            /*{
+            {
                 name: 'apppool'
                 count: 1
                 vmSize: cpuNodePoolVmSize
                 availabilityZones: []
-            }*/
+            }
         ]
         aadProfile: {
             aadProfileEnableAzureRBAC: true
