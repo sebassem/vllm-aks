@@ -122,6 +122,9 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.11.1' = {
         managedIdentities: {
         systemAssigned: true
         }
+        fluxExtension: {
+            name: 'flux'
+        }
         skuTier: 'Standard'
         skuName: 'Base'
         publicNetworkAccess: publicNetworkAccessEnabled ? 'Enabled' : 'Disabled'
