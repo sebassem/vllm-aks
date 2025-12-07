@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - cluster-bootstrap.yaml
+  - cluster-monitoring.yaml

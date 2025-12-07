@@ -44,12 +44,12 @@ param enableMIG bool = false
 @description('Name of the Log Analytics workspace to create.')
 param logAnalyticsWorkspaceName string = 'law-${location}-${suffix}'
 
-@description('Name of the Azure Container Registry to use.')
+/*@description('Name of the Azure Container Registry to use.')
 param acrName string = 'acrllm87232'
 
 @description('Resource group of the Azure Container Registry to use.')
 param acrResourceGroup string = 'vllm'
-
+*/
 resource rg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
     name: resourceGroupName
     location: location
@@ -63,10 +63,7 @@ scope: rg
     }
 }
 
-resource acr 'Microsoft.ContainerRegistry/registries@2025-05-01-preview' existing = {
-    name: acrName
-    scope: resourceGroup(acrResourceGroup)
-}
+
 
 module aks 'br/public:avm/res/container-service/managed-cluster:0.11.1' = {
     scope: rg
@@ -97,12 +94,12 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.11.1' = {
                     apps: 'llm-inference'
                 }
             }
-            {
+            /*{
                 name: 'apppool'
                 count: 1
                 vmSize: cpuNodePoolVmSize
                 availabilityZones: []
-            }
+            }*/
         ]
         aadProfile: {
             aadProfileEnableAzureRBAC: true
@@ -131,7 +128,33 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.11.1' = {
     }
 }
 
-module acrPullRole 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
+module clusterBootstrap 'br/public:avm/res/kubernetes-configuration/flux-configuration:0.3.8' = {
+    scope: rg
+    params: {
+        scope: 'cluster'
+        name: 'cluster-config'
+        clusterName: aks.outputs.name
+        kustomizations:{
+            bootstrap: {
+            path: './cluster-config/bootstrap/base'
+            prune: true
+            syncIntervalInSeconds: 120
+            }
+        }
+        namespace: 'flux-system'
+        clusterType: 'managedCluster'
+        sourceKind: 'GitRepository'
+        gitRepository: {
+            url: 'https://github.com/sebassem/vllm-aks'
+            repositoryRef: {
+                branch: 'main'
+            }
+            syncIntervalInSeconds: 120
+        }
+    }
+}
+
+/*module acrPullRole 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
     scope: resourceGroup('vllm')
     params: {
         principalId: aks.outputs.?kubeletIdentityObjectId ?? ''
@@ -140,3 +163,10 @@ module acrPullRole 'br/public:avm/ptn/authorization/resource-role-assignment:0.1
         description: 'AcrPull role assignment for AKS cluster'
     }
 }
+
+
+resource acr 'Microsoft.ContainerRegistry/registries@2025-05-01-preview' existing = {
+    name: acrName
+    scope: resourceGroup(acrResourceGroup)
+}
+    */
