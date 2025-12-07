@@ -18,7 +18,7 @@ param systemNodePoolCount int = 1
 param systemNodePoolName string = 'systempool'
 
 @description('VM size for the system node pool.')
-param systemNodePoolVmSize string = 'Standard_D2s_v6'
+param systemNodePoolVmSize string = 'Standard_D4s_v6'
 
 @description('VM size for the CPU user node pool.')
 param cpuNodePoolVmSize string = 'Standard_D4s_v6'
@@ -96,15 +96,12 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.11.1' = {
                 nodeLabels: {
                     apps: 'llm-inference'
                 }
-               /*nodeTaints: [
-                    'sku=gpu:NoSchedule'
-                ]
-                enableAutoScaling: true
-                minCount: 1
-                maxCount: 3
-                tags: {
-                    EnableManagedGPUExperience: 'true'
-                }*/
+            }
+            {
+                name: 'apppool'
+                count: 1
+                vmSize: cpuNodePoolVmSize
+                availabilityZones: []
             }
         ]
         aadProfile: {
@@ -134,34 +131,6 @@ module aks 'br/public:avm/res/container-service/managed-cluster:0.11.1' = {
     }
 }
 
-/*module appConfiguration 'br/public:avm/res/kubernetes-configuration/flux-configuration:0.3.8' = {
-    scope: rg
-    params: {
-        scope: 'cluster'
-        name: 'vllm-appconfig'
-        clusterName: aks.outputs.name
-        namespace: 'flux-system'
-        sourceKind: 'GitRepository'
-        gitRepository: {
-            url: 'https://github.com/sebassem/vllm-aks'
-            repositoryRef: {
-                branch: 'main'
-            }
-            syncIntervalInSeconds: 300
-            timeoutInSeconds: 3600
-        }
-        kustomizations: {
-            apps: {
-                path: './cluster-config/apps/overlays/EMEA/'
-                prune: true
-                retryIntervalInSeconds: 120
-                syncIntervalInSeconds: 600
-                timeoutInSeconds: 3600
-            }
-        }
-    }
-}
-*/
 module acrPullRole 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
     scope: resourceGroup('vllm')
     params: {

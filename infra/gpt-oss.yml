@@ -1,0 +1,55 @@
+apiVersion: kaito.sh/v1alpha1
+kind: Workspace
+metadata:
+  name: workspace-gpt-oss-vllm-nv-a10
+resource:
+  preferredNodes:
+    - aks-gpupool-17704991-vmss000000
+  labelSelector:
+    matchLabels:
+      app: llm-inference
+inference:
+  template:
+    spec:
+      containers:
+        - name: vllm-openai
+          image: vllm/vllm-openai:gptoss
+          imagePullPolicy: IfNotPresent
+          args:
+            - --model
+            - openai/gpt-oss-20b
+            - --swap-space
+            - "4"
+            - --gpu-memory-utilization
+            - "0.85"
+            - --port
+            - "5000"
+          ports:
+            - name: http
+              containerPort: 5000
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              cpu: "36"
+              memory: "440Gi"
+            requests:
+              nvidia.com/gpu: 1
+              cpu: "18"
+              memory: "220Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 600
+            periodSeconds: 20
+          env:  #special configs for A10 gpu
+            - name: VLLM_ATTENTION_BACKEND
+              value: "TRITON_ATTN_VLLM_V1"
+            - name: VLLM_DISABLE_SINKS
+              value: "1"

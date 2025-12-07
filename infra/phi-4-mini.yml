@@ -3,7 +3,8 @@ kind: Workspace
 metadata:
   name: workspace-phi-4-mini
 resource:
-  instanceType: Standard_NC4as_T4_v3
+  preferredNodes:
+    - aks-gpupool-42032865-vmss000000
   labelSelector:
     matchLabels:
       apps: llm-inference

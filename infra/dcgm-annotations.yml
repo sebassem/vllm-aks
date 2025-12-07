@@ -1,5 +1,0 @@
-metadata:
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "9400"
-    prometheus.io/path: "/metrics"
